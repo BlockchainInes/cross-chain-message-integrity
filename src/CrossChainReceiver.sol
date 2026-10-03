@@ -26,11 +26,7 @@ contract CrossChainReceiver {
         bytes32 payloadHash
     );
 
-    constructor(
-        address dispatcher_,
-        uint256 allowedSourceChainId_,
-        address allowedSourceSender_
-    ) {
+    constructor(address dispatcher_, uint256 allowedSourceChainId_, address allowedSourceSender_) {
         dispatcher = dispatcher_;
         allowedSourceChainId = allowedSourceChainId_;
         allowedSourceSender = allowedSourceSender_;
@@ -59,12 +55,6 @@ contract CrossChainReceiver {
         executionCount += 1;
         lastPayloadHash = payloadHash;
 
-        emit MessageExecuted(
-            messageId,
-            sourceChainId,
-            sourceSender,
-            nonce,
-            payloadHash
-        );
+        emit MessageExecuted(messageId, sourceChainId, sourceSender, nonce, payloadHash);
     }
 }

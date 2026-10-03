@@ -18,12 +18,7 @@ contract MessageHandler is Test {
 
     bytes32[] internal attemptedMessageIds;
 
-    constructor(
-        CrossChainReceiver receiver_,
-        address dispatcher_,
-        uint256 sourceChainId_,
-        address sourceSender_
-    ) {
+    constructor(CrossChainReceiver receiver_, address dispatcher_, uint256 sourceChainId_, address sourceSender_) {
         receiver = receiver_;
         dispatcher = dispatcher_;
         sourceChainId = sourceChainId_;
@@ -32,21 +27,10 @@ contract MessageHandler is Test {
 
     function executeValid(uint256 seed) external {
         uint64 nonce = receiver.nextNonce(sourceChainId, sourceSender);
-        bytes32 messageId = keccak256(
-            abi.encode("valid", nonce, seed)
-        );
-        bytes32 payloadHash = keccak256(
-            abi.encode("payload", nonce, seed)
-        );
+        bytes32 messageId = keccak256(abi.encode("valid", nonce, seed));
+        bytes32 payloadHash = keccak256(abi.encode("payload", nonce, seed));
 
-        _attempt(
-            dispatcher,
-            messageId,
-            sourceChainId,
-            sourceSender,
-            nonce,
-            payloadHash
-        );
+        _attempt(dispatcher, messageId, sourceChainId, sourceSender, nonce, payloadHash);
     }
 
     function replay(uint256 indexSeed) external {
@@ -62,21 +46,11 @@ contract MessageHandler is Test {
             }
         }
 
-        _attempt(
-            dispatcher,
-            messageId,
-            sourceChainId,
-            sourceSender,
-            nonce,
-            keccak256(abi.encode("replay", indexSeed))
-        );
+        _attempt(dispatcher, messageId, sourceChainId, sourceSender, nonce, keccak256(abi.encode("replay", indexSeed)));
     }
 
     function executeOldNonce(uint256 seed) external {
-        uint64 currentNonce = receiver.nextNonce(
-            sourceChainId,
-            sourceSender
-        );
+        uint64 currentNonce = receiver.nextNonce(sourceChainId, sourceSender);
 
         if (currentNonce == 0) return;
 
@@ -96,10 +70,7 @@ contract MessageHandler is Test {
     }
 
     function executeFutureNonce(uint64 jump, uint256 seed) external {
-        uint64 currentNonce = receiver.nextNonce(
-            sourceChainId,
-            sourceSender
-        );
+        uint64 currentNonce = receiver.nextNonce(sourceChainId, sourceSender);
 
         uint64 offset = uint64(bound(uint256(jump), 1, 32));
 
@@ -128,10 +99,7 @@ contract MessageHandler is Test {
         );
     }
 
-    function executeWrongSourceSender(
-        address wrongSender,
-        uint256 seed
-    ) external {
+    function executeWrongSourceSender(address wrongSender, uint256 seed) external {
         if (wrongSender == sourceSender) {
             wrongSender = address(uint160(sourceSender) ^ 1);
         }
@@ -146,18 +114,12 @@ contract MessageHandler is Test {
         );
     }
 
-    function executeUnauthorizedCaller(
-        address caller,
-        uint256 seed
-    ) external {
+    function executeUnauthorizedCaller(address caller, uint256 seed) external {
         if (caller == dispatcher) {
             caller = address(uint160(dispatcher) ^ 1);
         }
 
-        uint64 nonce = receiver.nextNonce(
-            sourceChainId,
-            sourceSender
-        );
+        uint64 nonce = receiver.nextNonce(sourceChainId, sourceSender);
 
         _attempt(
             caller,
@@ -169,21 +131,11 @@ contract MessageHandler is Test {
         );
     }
 
-    function attemptedMessageIdsLength()
-        external
-        view
-        returns (uint256)
-    {
+    function attemptedMessageIdsLength() external view returns (uint256) {
         return attemptedMessageIds.length;
     }
 
-    function attemptedMessageId(
-        uint256 index
-    )
-        external
-        view
-        returns (bytes32)
-    {
+    function attemptedMessageId(uint256 index) external view returns (bytes32) {
         return attemptedMessageIds[index];
     }
 
@@ -199,13 +151,7 @@ contract MessageHandler is Test {
 
         vm.prank(caller);
 
-        try receiver.receiveMessage(
-            messageId,
-            messageSourceChainId,
-            messageSourceSender,
-            nonce,
-            payloadHash
-        ) {
+        try receiver.receiveMessage(messageId, messageSourceChainId, messageSourceSender, nonce, payloadHash) {
             successfulExecutions += 1;
             successfulExecutionsByMessageId[messageId] += 1;
         } catch {

@@ -19,23 +19,13 @@ contract CrossChainReceiverTest is Test {
     bytes32 internal constant PAYLOAD_HASH_1 = keccak256("payload-1");
 
     function setUp() public {
-        receiver = new CrossChainReceiver(
-            DISPATCHER,
-            SOURCE_CHAIN_ID,
-            SOURCE_SENDER
-        );
+        receiver = new CrossChainReceiver(DISPATCHER, SOURCE_CHAIN_ID, SOURCE_SENDER);
     }
 
     function test_ReceiveMessage() public {
         vm.prank(DISPATCHER);
 
-        receiver.receiveMessage(
-            MESSAGE_ID_0,
-            SOURCE_CHAIN_ID,
-            SOURCE_SENDER,
-            0,
-            PAYLOAD_HASH_0
-        );
+        receiver.receiveMessage(MESSAGE_ID_0, SOURCE_CHAIN_ID, SOURCE_SENDER, 0, PAYLOAD_HASH_0);
 
         assertTrue(receiver.processedMessages(MESSAGE_ID_0));
         assertEq(receiver.nextNonce(SOURCE_CHAIN_ID, SOURCE_SENDER), 1);
@@ -47,61 +37,31 @@ contract CrossChainReceiverTest is Test {
         vm.prank(ATTACKER);
         vm.expectRevert(CrossChainReceiver.UnauthorizedDispatcher.selector);
 
-        receiver.receiveMessage(
-            MESSAGE_ID_0,
-            SOURCE_CHAIN_ID,
-            SOURCE_SENDER,
-            0,
-            PAYLOAD_HASH_0
-        );
+        receiver.receiveMessage(MESSAGE_ID_0, SOURCE_CHAIN_ID, SOURCE_SENDER, 0, PAYLOAD_HASH_0);
     }
 
     function test_RevertWhen_InvalidSourceChain() public {
         vm.prank(DISPATCHER);
         vm.expectRevert(CrossChainReceiver.InvalidSourceChain.selector);
 
-        receiver.receiveMessage(
-            MESSAGE_ID_0,
-            SOURCE_CHAIN_ID + 1,
-            SOURCE_SENDER,
-            0,
-            PAYLOAD_HASH_0
-        );
+        receiver.receiveMessage(MESSAGE_ID_0, SOURCE_CHAIN_ID + 1, SOURCE_SENDER, 0, PAYLOAD_HASH_0);
     }
 
     function test_RevertWhen_InvalidSourceSender() public {
         vm.prank(DISPATCHER);
         vm.expectRevert(CrossChainReceiver.InvalidSourceSender.selector);
 
-        receiver.receiveMessage(
-            MESSAGE_ID_0,
-            SOURCE_CHAIN_ID,
-            ATTACKER,
-            0,
-            PAYLOAD_HASH_0
-        );
+        receiver.receiveMessage(MESSAGE_ID_0, SOURCE_CHAIN_ID, ATTACKER, 0, PAYLOAD_HASH_0);
     }
 
     function test_RevertWhen_MessageIsReplayed() public {
         vm.startPrank(DISPATCHER);
 
-        receiver.receiveMessage(
-            MESSAGE_ID_0,
-            SOURCE_CHAIN_ID,
-            SOURCE_SENDER,
-            0,
-            PAYLOAD_HASH_0
-        );
+        receiver.receiveMessage(MESSAGE_ID_0, SOURCE_CHAIN_ID, SOURCE_SENDER, 0, PAYLOAD_HASH_0);
 
         vm.expectRevert(CrossChainReceiver.MessageAlreadyProcessed.selector);
 
-        receiver.receiveMessage(
-            MESSAGE_ID_0,
-            SOURCE_CHAIN_ID,
-            SOURCE_SENDER,
-            0,
-            PAYLOAD_HASH_0
-        );
+        receiver.receiveMessage(MESSAGE_ID_0, SOURCE_CHAIN_ID, SOURCE_SENDER, 0, PAYLOAD_HASH_0);
 
         vm.stopPrank();
 
@@ -111,49 +71,19 @@ contract CrossChainReceiverTest is Test {
     function test_RevertWhen_NonceIsSkipped() public {
         vm.prank(DISPATCHER);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CrossChainReceiver.InvalidNonce.selector,
-                uint64(0),
-                uint64(1)
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(CrossChainReceiver.InvalidNonce.selector, uint64(0), uint64(1)));
 
-        receiver.receiveMessage(
-            MESSAGE_ID_1,
-            SOURCE_CHAIN_ID,
-            SOURCE_SENDER,
-            1,
-            PAYLOAD_HASH_1
-        );
+        receiver.receiveMessage(MESSAGE_ID_1, SOURCE_CHAIN_ID, SOURCE_SENDER, 1, PAYLOAD_HASH_1);
     }
 
     function test_RevertWhen_OldNonceUsesNewMessageId() public {
         vm.startPrank(DISPATCHER);
 
-        receiver.receiveMessage(
-            MESSAGE_ID_0,
-            SOURCE_CHAIN_ID,
-            SOURCE_SENDER,
-            0,
-            PAYLOAD_HASH_0
-        );
+        receiver.receiveMessage(MESSAGE_ID_0, SOURCE_CHAIN_ID, SOURCE_SENDER, 0, PAYLOAD_HASH_0);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CrossChainReceiver.InvalidNonce.selector,
-                uint64(1),
-                uint64(0)
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(CrossChainReceiver.InvalidNonce.selector, uint64(1), uint64(0)));
 
-        receiver.receiveMessage(
-            MESSAGE_ID_1,
-            SOURCE_CHAIN_ID,
-            SOURCE_SENDER,
-            0,
-            PAYLOAD_HASH_1
-        );
+        receiver.receiveMessage(MESSAGE_ID_1, SOURCE_CHAIN_ID, SOURCE_SENDER, 0, PAYLOAD_HASH_1);
 
         vm.stopPrank();
 
@@ -164,21 +94,9 @@ contract CrossChainReceiverTest is Test {
     function test_SequentialMessagesExecuteExactlyOnce() public {
         vm.startPrank(DISPATCHER);
 
-        receiver.receiveMessage(
-            MESSAGE_ID_0,
-            SOURCE_CHAIN_ID,
-            SOURCE_SENDER,
-            0,
-            PAYLOAD_HASH_0
-        );
+        receiver.receiveMessage(MESSAGE_ID_0, SOURCE_CHAIN_ID, SOURCE_SENDER, 0, PAYLOAD_HASH_0);
 
-        receiver.receiveMessage(
-            MESSAGE_ID_1,
-            SOURCE_CHAIN_ID,
-            SOURCE_SENDER,
-            1,
-            PAYLOAD_HASH_1
-        );
+        receiver.receiveMessage(MESSAGE_ID_1, SOURCE_CHAIN_ID, SOURCE_SENDER, 1, PAYLOAD_HASH_1);
 
         vm.stopPrank();
 
